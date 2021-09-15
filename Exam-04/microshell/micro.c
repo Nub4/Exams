@@ -35,7 +35,7 @@ int ft_size_av(char **av)
     int i;
 
     i = 0;
-    while (av[i] && strcmp(av[i], "|") != 0 && strcmp(av[i], ",") != 0)
+    while (av[i] && strcmp(av[i], "|") != 0 && strcmp(av[i], ";") != 0)
         i++;
     return (i);
 }
@@ -45,7 +45,7 @@ void    ft_exit(char *s, int ret)
     if (ret == 1)
         write(2, "error: fatal\n", 13);
     else if (ret == 2)
-        write(2, "error: :cd bad arguments\n", 25);
+        write(2, "error: cd: bad arguments\n", 25);
     else if (ret == 3)
     {
         write(2, "error: cd: cannot change directory to ", 38);
@@ -58,7 +58,6 @@ void    ft_exit(char *s, int ret)
         write(2, s, ft_strlen(s));
         write(2, "\n", 1);
     }
-    exit(1);
 }
 
 char    *ft_strdup(char *s)
@@ -76,40 +75,30 @@ char    *ft_strdup(char *s)
     return (new);
 }
 
-
-
-t_all   *ft_lstlast(t_all *a)
-{
-    if (a)
-        while (a->next)
-            a = a->next;
-    return (a);
-}
-
 void    ft_lstadd_back(t_all **a, t_all *new)
 {
     t_all *temp;
 
-    if (!a || !new)
-        return ;
     if (!*a)
-    {
         *a = new;
-        return ;
+    else
+    {
+        temp = *a;
+        while (temp->next)
+            temp = temp->next;
+        temp->next = new;
+        new->prev = temp;
     }
-    temp = ft_lstlast(*a);
-    temp->next = new;
-    new->prev = temp;
 }
 
 int ft_check_end(char *av)
 {
     if (!av)
-        return (3);
+        return (TYPE_END);
     if (strcmp(av, "|") == 0)
-        return (4);
+        return (TYPE_PIPE);
     if (strcmp(av, ";") == 0)
-        return (5);
+        return (TYPE_BREAK);
     return (0);
 }
 
@@ -141,7 +130,7 @@ void    ft_exec_cmd(t_all *temp, char **env)
     int pipe_open;
 
     pipe_open = 0;
-    if (temp->type == 4 || (temp->prev && temp->prev->type == 4))
+    if (temp->type == TYPE_PIPE || (temp->prev && temp->prev->type == TYPE_PIPE))
     {
         pipe_open = 1;
         if (pipe(temp->fd))
@@ -152,9 +141,9 @@ void    ft_exec_cmd(t_all *temp, char **env)
         ft_exit(NULL, 1);
     else if (pid == 0)
     {
-        if (temp->type == 4 && dup2(temp->fd[1], 1) < 0)
+        if (temp->type == TYPE_PIPE && dup2(temp->fd[1], 1) < 0)
             ft_exit(NULL, 1);
-        if (temp->prev && temp->prev->type == 4 && dup2(temp->prev->fd[0], 0) < 0)
+        if (temp->prev && temp->prev->type == TYPE_PIPE && dup2(temp->prev->fd[0], 0) < 0)
             ft_exit(NULL, 1);
         if (execve(temp->av[0], temp->av, env) < 0)
             ft_exit(temp->av[0], 4);
@@ -166,13 +155,12 @@ void    ft_exec_cmd(t_all *temp, char **env)
         if (pipe_open)
         {
             close(temp->fd[1]);
-            if (!temp->next || temp->type == 5)
+            if (!temp->next || temp->type == TYPE_BREAK)
                 close(temp->fd[0]);
         }
-        if (temp->prev && temp->prev->type == 4)
+        if (temp->prev && temp->prev->type == TYPE_PIPE)
             close(temp->prev->fd[0]);
     }
-
 }
 
 void    ft_exec_cmds(t_all *a, char **env)

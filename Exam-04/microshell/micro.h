@@ -8,6 +8,10 @@
 # include <unistd.h>
 # include <string.h>
 
+# define TYPE_END 3
+# define TYPE_PIPE 4
+# define TYPE_BREAK 5
+
 typedef struct      s_all
 {
     char            **av;
