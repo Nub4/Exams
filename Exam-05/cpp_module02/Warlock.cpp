@@ -23,6 +23,7 @@ void    Warlock::forgetSpell(std::string name) { this->book.forgetSpell(name); }
 
 void    Warlock::launchSpell(std::string name, const ATarget &ref){
     ASpell *temp = this->book.createSpell(name);
-    if (temp)
+    const ATarget *lol = &ref;
+    if (temp && lol)
         temp->launch(ref);
 }
