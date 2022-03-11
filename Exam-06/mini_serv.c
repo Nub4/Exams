@@ -78,7 +78,6 @@ void    ft_sendAll(int clientSocket, char *str_req)
     {
         if (temp->socket != clientSocket && FD_ISSET(temp->socket, &writefds))
         {
-            printf("%s", str_req);
             if (send(temp->socket, str_req, strlen(str_req), 0) < 0)
                 ft_error("Fatal error\n", 1, 2);
         }
